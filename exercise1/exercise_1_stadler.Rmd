@@ -1,0 +1,49 @@
+---
+title: "StatSim & CM - Exercise 1 Stadler"
+
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    number_sections: no
+    df_print: paged
+date: "2024-10-07"
+---
+
+```{r setup, include=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
+```
+
+
+# Exercise 1 - Introduction to Simulation with Variance Estimation
+
+## Compare the 4 algorithms against R's 'var' function as a gold standard regarding the quality of their estimates.
+
+### Implement all variants of variance calculation as functions.
+Code for algorithm 1-4
+```{r algo-1to4, warning=FALSE , message=FALSE}
+var_1 <- function(){
+  value<-0
+  return(value)
+}
+```
+
+
+
+### Write a wrapper function which calls the different variants.
+Code for wrapper
+```{r wrapper, warning=FALSE , message=FALSE}
+
+```
+
+## Compare the computational performance of the 4 algorithms against R's 'var' function as a gold standard and summarise them in tables and graphically.
+
+
+
+## Investigate the scale invariance property for different values and argue why the mean is performing best as mentioned with the condition number.
+
+### Compare the results according to the instructions provided by Comparison I and Comparison II of the slides.
+
+### Provide your results in table format and graphical format comparable to the example in the slides.
+
+## Compare condition numbers for the 2 simulated data sets and a third one where the requirement is not fulfilled, as described during the lecture.
