@@ -1,49 +1,102 @@
 ---
-title: "StatSim & CM - Exercise 1 Stadler"
+title: "Exercise 2 -  Random Number Generation through CDF and acceptance-rejection sampling"
 
 output:
   pdf_document:
     toc: yes
     toc_depth: 4
-    number_sections: no
+    number_sections: yes
+    latex_engine: xelatex
     df_print: paged
 date: "2024-10-07"
+author: Florian Stadler
 ---
 
 ```{r setup, include=FALSE,warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
+library(tinytex)
 ```
 
 
-# Exercise 1 - Introduction to Simulation with Variance Estimation
+# Random Number Generation Algorithm
+The key idea of pseudo random number generation (PRNG) is to create numbers, that look like truely random generated numbers(RNG). As true RNGs are usually bound to real physical processes, they are not easily availabe. The Linear Congruential Random Number Generation (LCRNG) Algorithm is one of many PRNG algorithms. LCRNG has that name since it is based on a linear formula. Inputs are the modules (m), multiplier(a) and the increment (c). Based on a seeds, the algorithm produces a pseudo random sample of size n of numbers between 0 and m-1. The algorithm is "Pseudo", since the sequence is deterministic to those who know the seed and the function definition. If n is larger than m, the sequence will repeat itself since the algorithm is cyclic.
 
-## Compare the 4 algorithms against R's 'var' function as a gold standard regarding the quality of their estimates.
+Lets look at the LCRNG-variation of the slides:
+```{r}
+lcrng <- function(n,m,a,c=0,x0){
+  us <- numeric(n)
+  for (i in 1:n){
+    
+    x0<- (a*x0+c) %% m
+    us[i] = x0
+    }
+return (us)
+}
+lcrng(6,7,3,1,2)
+```
 
-### Implement all variants of variance calculation as functions.
-Code for algorithm 1-4
-```{r algo-1to4, warning=FALSE , message=FALSE}
-var_1 <- function(){
-  value<-0
+We created a pseudo random sample of 6 numbers ranging between 0 and 6. In this case, we got a sample without replacing. However, this is not always be the case as repetition occurs for some sets of inputs.
+
+## Trying and comparing different values of m, a to illustrate the behaviour of the method as described on slide 18.
+We will now show some cases, where the cycle-length is smaller than m or even 1. We will also show the reptitiveness of the algorithm:
+```{r}
+lcrng(16,16,5,1,3)
+lcrng(16,6,2,1,3)
+lcrng(16,9,4,1,3)
+lcrng(16,4,2,1,3)
+```
+
+
+# Exponential Distribution
+The exponential distribution has the cdf
+$$
+F(x) = 1 - e^{-\lambda x},\: \lambda>0.
+$$
+
+## Assume you can generate easily uniform random variables. How can you obtain then a random sample from the exponential distribution?
+If we have a uniform random variable, we can get a random sample from the exponential distribution by using the inverse of the cdf. The inverse is
+$$
+F^{-1}(u) = - \frac{1}{\lambda}\log(1-u)
+$$
+We will now write an R function, which utilizes the inverse to create a random sample.
+```{r}
+inv.exp.cdf <- function(x, lambda){
+  return( -1/lambda * log(1-x) )
+}
+random.sample.exp <- function(n,lambda=1){
+  u <- runif(n)
+  value <- inv.exp.cdf(u, lambda)
   return(value)
 }
-```
-
-
-
-### Write a wrapper function which calls the different variants.
-Code for wrapper
-```{r wrapper, warning=FALSE , message=FALSE}
+random.sample.exp(1,0.1)
 
 ```
+random.sample.exp gives us a random number in a certain range. The distribution of the obtained sample values is heavily dependend on lambda. To investigate this, we will create random sample of size n=1000 for 3 different lambdas and will evaluate their "RNG Quality" by comparing the results to the function rexp. We set the default lambda value to 1 as this is also the default value of the R function rexp.
 
-## Compare the computational performance of the 4 algorithms against R's 'var' function as a gold standard and summarise them in tables and graphically.
+```{r}
+sample.rexp <- rexp(1000)
+sample.inv.exp <- random.sample.exp(1000)
+```
+We created the sample for n=1000 with $\lambda$=1. Lets look at the qqplots:
+
+```{r}
+qqplot(sample.rexp, sample.inv.exp, main="Q-Q plot for the inverse exp method, lambda=1",
+ylab = "Sample from rexp",
+xlab = "Sample from inverse exponential with uniform random variable")
+```
+I would rate the quality of the random numbers very good until ~3.5. Until that number, the distribution are very much alike. Above that number, very few observation are in the sample which causes the distribution to differ as variance is a big influence on a low sample size. Of the 1000 numbers, only about 10 are bigger than approximately 4.8. For these numbers, we observe a divergenge of the distributions quantiles.
+### Write an R function which takes as imput the number of samples required and the parameter λ. Use the function runif to create the uniform random variables.
+### For three different values of λ create 1000 random samples and evaluate the quality of your random number generator using qq-plots which compare against a real exponential distribution with the specified parameter λ.
 
 
+# Beta distribution
+The Beta distribution has the following pdf:
+$$
+f(x,\alpha,\beta) =\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha) \Gamma(\beta)}x^{\alpha-1}(1-x)^{\beta-1}
+$$
+## Write a function which uses an acceptance-rejection approach to sample from a beta distribution. Argue what is a natural candidate for a proposal distribution.
 
-## Investigate the scale invariance property for different values and argue why the mean is performing best as mentioned with the condition number.
+### Focus first on the case where both parameters of the beta distribution are 2. Find what is a good constant to keep the rejection proportion small.
 
-### Compare the results according to the instructions provided by Comparison I and Comparison II of the slides.
+### Write a function based on this approach to sample from an arbitrary beta distribution and which adapts the constant to the user specified parameters assuming that both parameters are larger than 1.
 
-### Provide your results in table format and graphical format comparable to the example in the slides.
-
-## Compare condition numbers for the 2 simulated data sets and a third one where the requirement is not fulfilled, as described during the lecture.
