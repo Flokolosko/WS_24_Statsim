@@ -8,7 +8,7 @@ output:
     number_sections: yes
     latex_engine: xelatex
     df_print: paged
-date: "2024-10-07"
+date: "2024-10-08"
 author: Florian Stadler
 ---
 
@@ -158,7 +158,7 @@ First, I want to explain how I chose the best constant for the acceptance - reje
 $$
 x_{max}=\frac{(\alpha - 1)} {(\alpha + \beta - 2)}, \text{for} \: \alpha >1, \beta>1.
 $$
-Then we simply calculate the value of the beta function at this point. we Then have the best possible constant for our method for our set of constants.  For the case where both parameters are 2, $x_{max} = 0.5$ and $B(x_{max}) =$`r find.best.constant(2,2)`. This is what happens in my function find.best.constant. With this value, we keep the rejection proportion as small as possible.
+Then we simply calculate the value of the beta function at this point. we Then have the best possible constant for our method for our set of constants.  For the case where both parameters are 2, $x_{max} = 0.5$ and $f(x_{max},2,2) = `r find.best.constant(2,2)`$ . This is what happens in my function find.best.constant. With this value, we keep the rejection proportion as small as possible.
 
 ## Sampling quality of the acceptance-rejection approach
 

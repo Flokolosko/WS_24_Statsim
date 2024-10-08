@@ -1,0 +1,124 @@
+---
+title: "Exercise 3 -  Monte Carlo Simulation of areas"
+
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    number_sections: yes
+    latex_engine: xelatex
+    df_print: paged
+date: "2024-10-08"
+author: Florian Stadler
+---
+
+```{r setup, include=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
+library(tinytex)
+```
+
+# Task 1 Monte Carlo Integration
+In this task, we consider the integral
+$$
+\int_1^b{e^{-x^3}}.
+$$
+We will now compute following subtasks.
+
+## Use uniformly distributed random variables to approximate the integral for b = 6 (using Monte Carlo integration). Then use the function integrate for comparison.
+
+```{r}
+f <- function(x){
+  return (exp(-x**3))
+}
+monte.carlo.unif.based <- function(b, n){
+  uniform.x <- runif(n,1,b)
+  f.values <- f(uniform.x)
+  average.f <- mean(f.values)
+  int.est <- (b-1) * average.f
+  return(int.est)
+}
+
+```
+With the function monte.carlo.unif.based we can compute the monte carlo estimation for the given integral. Lets look at the values for  
+n=100, b=6: Integral $\approx `r monte.carlo.unif.based(6,100)`$   
+n=10000, b=6: Integral $\approx `r monte.carlo.unif.based(6,10000)`$  
+n=1000000, b=6: Integral $\approx `r monte.carlo.unif.based(6,1000000)`$  
+What the method does is to create a uniform sample in the integration area -> applies the function in the integral on all those data points -> takes the mean of the function values -> Multiply by the integral area. 
+We can use the base r "integrate" function, to get the value of the integral.
+for b=6 we get the Integral $= `r integrate(f,1,6)[[1]]`$ with an error of less than $3.2\cdot 10^{-7}$.
+We observe that montecarlo comes pretty close when choosing high enough n. However, this also increases the computation time by a lot and for low n the difference is higher.
+
+
+## Use Monte Carlo integration to compute the integral for b = ∞. What would be a good density for the simulation in that case? Use also the function integrate for comparison.
+We cannot use the uniform distribution does not have the same support due to b = ∞. Therefore, we will use the exponential distribution and shift the integration levels. We get the equivalent integral
+$$
+\int_0^∞{e^{-(x+1)^3}}.
+$$
+we now have the same support as the exponential distribution and can compute the montecarlo integration with an exponential distrubuted sample.
+```{r}
+monte.carlo.exp.based <- function(n){
+  x <- rexp(n)
+  value <- mean(f(x+1)/dexp(x))
+  return (value)
+}
+montecarlo.value<- monte.carlo.exp.based(1000000)
+cat(paste("Monte Carlo Integral:",montecarlo.value))
+integral.value <-integrate(f,1,Inf)[[1]]
+cat(paste("True Integral:",integral.value))
+cat(paste("The absolute difference of these methods is ",integral.value-montecarlo.value))
+```
+## Do you have an explanation why Monte Carlo integration agrees in 1.2 with integrate but not so much in 1.1?
+By using the exponential distribution in 1.2, we naturally get more points that are closer to the range of arguments, where the integrand is bigger. The function in the integrand is larger, the closer the points are to 0.  Therefore, by choosing the exponential distribution, we did importance sampling. Thus we have reduced the variance of the estimate significantly since we have more data points at the "important" values. In 1.1, a lot more data points are at a value range, where the function is close to zero. Therefore, we need a much bigger sample size, to get more accurate results, when using uniform distribution for monte carlo estimation for this integral.
+
+# Task 2 Multivariable Monte Carlo Approximation (2 Dimensional)
+Monte Carlo simulation shall be utilized for obtaining the area enclosed by the graph of the function 
+$$
+r(t) = e^{\cos(t)} - 2\cdot \cos(4t) - \sin\left( \frac{t}{12}\right)^{5}, \text{for } t\in [-\pi,\pi],
+$$
+when using polar x- and y-coordinates
+$$
+x = r(t) \cos(t), y= r(t)\sin(t).
+$$
+## Visualization of the function
+We will visualize the radius movement of r and the area of the function.
+```{r,fig.show="hold", out.width="50%"}
+r <- function(t) {
+  return((exp(cos(t)) - 2 * cos(4*t) - sin(t/12)^5))
+}
+plot(r, -pi, pi, main="Radius movement", xlab="t", ylab="r(t)")
+
+t <- seq(-pi, pi, length.out=2500)
+x_coord <- r(t) * sin(t)
+y_coord <- r(t) * cos(t)
+plot(x_coord, y_coord, type="l", main="Visualization of the Two-Dimensional Movement of the polar 
+     function", xlab="x", ylab="y")
+
+polygon(x_coord, y_coord, col = rgb(0.20, 0.53, .52, alpha = 0.5))
+```
+The area of the function looks like a bit like a butterfly :)
+
+## Generate uniform random coordinates within the rectangle [−2,3.5]×[−3,3] and an indicator whether this point lies within the area in question.
+First, we try to get a method to decide, whether a point is within the area or not. Then, we simulate this for various sample sizes of random coordinates.
+```{r}
+rand_x <- runif(1,-2,3.5)
+rand_y <- runif(1,-3,3)
+plot(x_coord, y_coord, type='l', main="Random Points in the butterfly area", 
+     xlab="x", ylab="y")
+points(rand_x, rand_y, col='blue')
+
+r_rand <- sqrt(rand_x^2 + rand_y^2)
+t_rand_1 <- asin(rand_x / r_rand)
+t_rand_2 <- acos(rand_y / r_rand)
+
+x1_calc <- r(t_rand_1) * sin(t_rand_1) 
+y1_calc <- r(t_rand_1) * cos(t_rand_1) 
+
+x2_calc <- r(t_rand_2) * sin(t_rand_2) 
+y2_calc <- r(t_rand_2) * cos(t_rand_2)  
+
+points(x1_calc, y1_calc, col='yellow')
+points(x2_calc, y2_calc, col='orange') 
+
+
+```
+
