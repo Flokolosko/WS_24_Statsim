@@ -103,9 +103,9 @@ The area of the function looks like a bit like a butterfly :) (Although I think 
 ## Generate uniform random coordinates within the rectangle [−2,3.5]×[−3,3] and an indicator whether this point lies within the area in question.
 
 We will define a function, to decide, whether a function is inside the butterfly. Furthermore, with this function, we will indicate, whether a point is inside the butterfly and plot accordingly. For this, we will use the arcus tangens functions for 2 dimension. We furthermore plot 100, 1k, 10k and 100k random Points inside the butterfly.
-Funfact: When I tried to set a seed before runif, I get a straight line of points, which may indicates that runif may be kind of cyclic. Therefore I did not set a seed before the runif functions
+Funfact: When I tried to set a seed before runif, I get a straight line of points, which may indicates that runif may be kind of cyclic. Therefore I did not set a seed before the runif functions. For verification we test the function for the point (0,0)
 
-```{r}
+```{r,fig.show="hold", out.width="50%"}
 library("tidyverse")
 
 inside.butterfly <- function (x,y){
@@ -121,8 +121,8 @@ generate.points.butterfly <- function(n){
   df <- data.frame(x=x.coords,y=y.coords) %>% mutate(is.inside = inside.butterfly(x,y))
   title<- paste0(n," Points in the butterfly")
   plot.butterfly(title)
-  points(df$x,df$y,col=ifelse(df$is.inside,"darkgreen","darkred"),pch=19,cex=.46)
-  legend("topright",legend=c("Inside","Outside"), col = c("darkgreen","darkred"),pch=c(19,19))
+  points(df$x,df$y,col=ifelse(df$is.inside,"green","darkred"),pch=19,cex=.46)
+  legend("topright",legend=c("Inside","Outside"), col = c("green","darkred"),pch=c(19,19))
   }
 
 generate.points.butterfly(100)
@@ -136,7 +136,7 @@ generate.points.butterfly(10000)
 generate.points.butterfly(100000)
 ```
 
-We can see, the more points we plot, the more random points we plot, the closer we get to the real figure. Hence, montecarlo approximation is very useful for complex figures, where Integrating is very costly or difficult. To get the area estimate, we simply need to calculate the area of the rectangle, in which we created the random points. Then, we just need to get the percentage of how many of those randomly generated points are in the area and then multiply with the area of the rectange. We get following table by doing so:
+One can see, the more random points we plot and indicate them, the closer we get to the real figure. If we continue this for a large number of points, we expect to get the full are of the butterfly. Hence, montecarlo approximation is very useful for complex figures, where Integrating is very costly or difficult. To get the area estimate, we simply need to follow 2 steps. First, generate random points in the given intervalls and calculate the area of the rectangle of these intervalls. Secondly, we need to get the percentage of how many of those randomly generated points are in the desired area and then multiply with the area of the rectangle. For infinitely many points this converges to the integral of the said function. The most "complex" step in this algorithm is to get the algorithm, whether a point is inside the function area.  We get following table by doing so:
 
 ```{r,fig.show="hold", out.width="50%"}
 get.inside.percentage <- function(n) {
@@ -147,6 +147,7 @@ get.inside.percentage <- function(n) {
   return(df %>% filter(is.inside==FALSE) %>% nrow()/ nrow(df))
 }
 area <- 5.5*6
-last.table <- data.frame(n=c(10^2,10^3,10^4,10^5))
-last.table %>% mutate(percentage = get.inside.percentage(n)) %>% mutate(area=area*percentage)
+last.table <- data.frame(n=c(100,1000,10000,100000),percentage=c(get.inside.percentage(100),get.inside.percentage(1000),get.inside.percentage(10000),get.inside.percentage(100000)))
+last.table<- last.table %>% mutate(area=area*percentage)
+knitr::kable(last.table)
 ```
