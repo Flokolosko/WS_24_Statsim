@@ -1,0 +1,3 @@
+*.pdf
+exercise4/*.pdf
+exercise4/L4_BootstrapMethods_Basics_Probability_Revision.pdf
