@@ -1,0 +1,36 @@
+---
+title: "Exercise 4 - Sample distribution and Central Limit Theorem"
+
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    number_sections: yes
+    latex_engine: xelatex
+    df_print: paged
+date: "2024-10-08"
+author: Florian Stadler
+---
+
+```{r setup, include=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
+library(tinytex)
+```
+
+# Task 1 Bootstap sampling
+We start by initializing the given data points.
+```{r}
+x <- c(4.94, 5.06, 4.53, 5.07, 4.99, 5.16, 4.38, 4.43, 4.93, 4.72, 4.92, 4.96)
+```
+
+## How many possible bootstrap samples are there, if each bootstrap sample has the same size as the original?
+By applying bootstrapping, we sample from our data points with retaking. This would account for $12^{12}-1$ possible samples if we regard order. If we do not want to regard ordering of the data points (stars and bars theorem), we may look at $\binom{23}{12} = `r choose(23,12)`$.
+
+## Compute the mean and the median of the original sample.
+```{r}
+cat("mean of original sample = ", mean(x))
+cat("median of original sample = ", median(x))
+```
+
+## Create 2000 bootstrap samples and compute their means.
+
