@@ -87,38 +87,66 @@ r <- function(t) {
 }
 plot(r, -pi, pi, main="Radius movement", xlab="t", ylab="r(t)")
 
-t <- seq(-pi, pi, length.out=2500)
-x_coord <- r(t) * sin(t)
-y_coord <- r(t) * cos(t)
-plot(x_coord, y_coord, type="l", main="Visualization of the Two-Dimensional Movement of the polar 
-     function", xlab="x", ylab="y")
+plot.butterfly<- function(main="Visualization of the Two-Dimensional Movement of the polar 
+     function"){
+  t <- seq(-pi, pi, length.out=2500)
+x_coord <- r(t) * cos(t)
+y_coord <- r(t) * sin(t)
+plot(x_coord, y_coord, type="l", main=main, xlab="x", ylab="y",asp=.75)
 
 polygon(x_coord, y_coord, col = rgb(0.20, 0.53, .52, alpha = 0.5))
+}
+plot.butterfly()
 ```
-The area of the function looks like a bit like a butterfly :)
+The area of the function looks like a bit like a butterfly :) (Although I think the head part should be inverted, but the R output and the PDF Output differ in the area coloring a bit. I couldn't figure out why)
 
 ## Generate uniform random coordinates within the rectangle [−2,3.5]×[−3,3] and an indicator whether this point lies within the area in question.
-First, we try to get a method to decide, whether a point is within the area or not. Then, we simulate this for various sample sizes of random coordinates.
+
+We will define a function, to decide, whether a function is inside the butterfly. Furthermore, with this function, we will indicate, whether a point is inside the butterfly and plot accordingly. For this, we will use the arcus tangens functions for 2 dimension. We furthermore plot 100, 1k, 10k and 100k random Points inside the butterfly.
+Funfact: When I tried to set a seed before runif, I get a straight line of points, which may indicates that runif may be kind of cyclic. Therefore I did not set a seed before the runif functions
+
 ```{r}
-rand_x <- runif(1,-2,3.5)
-rand_y <- runif(1,-3,3)
-plot(x_coord, y_coord, type='l', main="Random Points in the butterfly area", 
-     xlab="x", ylab="y")
-points(rand_x, rand_y, col='blue')
+library("tidyverse")
 
-r_rand <- sqrt(rand_x^2 + rand_y^2)
-t_rand_1 <- asin(rand_x / r_rand)
-t_rand_2 <- acos(rand_y / r_rand)
+inside.butterfly <- function (x,y){
+  z <- x^2 + y^2
+  return (z<= r(atan2(y,x))^2)
+}
 
-x1_calc <- r(t_rand_1) * sin(t_rand_1) 
-y1_calc <- r(t_rand_1) * cos(t_rand_1) 
+cat("The point (0,0) is inside the function: ", inside.butterfly(0,0))
 
-x2_calc <- r(t_rand_2) * sin(t_rand_2) 
-y2_calc <- r(t_rand_2) * cos(t_rand_2)  
+generate.points.butterfly <- function(n){
+  x.coords <- runif(n,-2,3.5)
+  y.coords <- runif(n,-3,3)
+  df <- data.frame(x=x.coords,y=y.coords) %>% mutate(is.inside = inside.butterfly(x,y))
+  title<- paste0(n," Points in the butterfly")
+  plot.butterfly(title)
+  points(df$x,df$y,col=ifelse(df$is.inside,"darkgreen","darkred"),pch=19,cex=.46)
+  legend("topright",legend=c("Inside","Outside"), col = c("darkgreen","darkred"),pch=c(19,19))
+  }
 
-points(x1_calc, y1_calc, col='yellow')
-points(x2_calc, y2_calc, col='orange') 
-
-
+generate.points.butterfly(100)
+generate.points.butterfly(1000)
 ```
 
+
+
+```{r,fig.show="hold", out.width="50%"}
+generate.points.butterfly(10000)
+generate.points.butterfly(100000)
+```
+
+We can see, the more points we plot, the more random points we plot, the closer we get to the real figure. Hence, montecarlo approximation is very useful for complex figures, where Integrating is very costly or difficult. To get the area estimate, we simply need to calculate the area of the rectangle, in which we created the random points. Then, we just need to get the percentage of how many of those randomly generated points are in the area and then multiply with the area of the rectange. We get following table by doing so:
+
+```{r,fig.show="hold", out.width="50%"}
+get.inside.percentage <- function(n) {
+  x.coords <- runif(n,-2,3.5)
+  y.coords <- runif(n,-3,3)
+  df <- data.frame(x=x.coords,y=y.coords) %>% mutate(is.inside = inside.butterfly(x,y))
+  
+  return(df %>% filter(is.inside==FALSE) %>% nrow()/ nrow(df))
+}
+area <- 5.5*6
+last.table <- data.frame(n=c(10^2,10^3,10^4,10^5))
+last.table %>% mutate(percentage = get.inside.percentage(n)) %>% mutate(area=area*percentage)
+```
