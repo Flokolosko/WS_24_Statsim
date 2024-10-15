@@ -15,6 +15,7 @@ author: Florian Stadler
 ```{r setup, include=FALSE,warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE)
 library(tinytex)
+library(tidyverse)
 ```
 
 # Task 1 Bootstap sampling
@@ -33,4 +34,168 @@ cat("median of original sample = ", median(x))
 ```
 
 ## Create 2000 bootstrap samples and compute their means.
+### Compute the mean on the first 20,200 and 2000 bootstrap means.
+```{r}
+set.seed(11835945)
+bootstrap.sample <- data.frame(t(replicate(2000,c(sample(x,replace=TRUE)))))
+df.bootstrap.mean_medians <- data.frame(means= rowMeans(bootstrap.sample[1:2000,]), medians = apply(bootstrap.sample, 1, median, na.rm=T))
+mean(rowMeans(bootstrap.sample[1:20,]))
+cat("mean of first 20 bootstrap sample means = ",mean(df.bootstrap.mean_medians[1:20,"means"]))
+cat("mean of first 200 bootstrap sample means = ",mean(df.bootstrap.mean_medians[1:200,"means"]))
+cat("mean of first 2000 bootstrap sample means = ",mean(df.bootstrap.mean_medians[1:2000,"means"]))
+```
+
+### Visualise the distribution all the different bootstrap means to the sample mean. Does the Central Limit Theorem kick in?
+```{r,fig.width=6, fig.height=4}
+plot(density(df.bootstrap.mean_medians$means),xlab="Mean values",main="Distribution of the bootstrap sample means") 
+abline(v=mean(x),col="red")
+legend("topleft",legend=c("Bootstrap means","Mean of original sample"),col=c("black","red"),pch=c("l","l"))
+```
+We see, that the means of the bootstraps are normally distributed around the sample mean. Therefore, there expectations is the true $\lambda$ and the variance is bound. Thus, we fullfill the requirements of the Central Limit Theorem and can apply it. 
+
+
+### Based on the three different bootstrap sample lengths in 1.3 - compute the corresponding 0.025 and 0.975 quantiles. Compare the three resulting intervals against each other and the "true" confidence interval of the mean under the assumption of normality. (Use for example the function t.test to obtain the 95% percent CI based on asympotic considerations for the mean.)
+```{r}
+get.quantile.means <- function(data,index,prob){
+  return(quantile(data$means[1:index],probs=prob))
+}
+table.mean.quantiles <- data.frame(`20`=get.quantile.means(df.bootstrap.mean_medians,20,c(0.025,0.975)),
+                                   `200`=get.quantile.means(df.bootstrap.mean_medians,200,c(0.025,0.975)),
+                                   `2000`=get.quantile.means(df.bootstrap.mean_medians,2000,c(0.025,0.975)))
+table.mean.quantiles<-data.frame(t(table.mean.quantiles))
+colnames(table.mean.quantiles) <- c("Q_0.025","Q_0.975")
+rownames(table.mean.quantiles) <- c(20,200,2000)
+knitr::kable(table.mean.quantiles)
+t.test(x,conf.level = .95)
+```
+We can see, that our intervall with 2000 bootstrap sample means comes closer to the "true" 95% CI.
+
+## Create 2000 bootstrap samples and compute their medians.
+### First 20,200 and 2000 mean of medians.
+```{r}
+mean(rowMeans(bootstrap.sample[1:20,]))
+cat("mean of first 20 bootstrap sample medians = ",median(df.bootstrap.mean_medians[1:20,"means"]))
+cat("mean of first 200 bootstrap sample medians = ",median(df.bootstrap.mean_medians[1:200,"means"]))
+cat("mean of first 2000 bootsrtap sample medians = ",median(df.bootstrap.mean_medians[1:2000,"means"]))
+```
+```{r,fig.width=6, fig.height=4}
+plot(density(df.bootstrap.mean_medians$medians),xlab="Mean values",main="Distribution of the bootstrap sample means") 
+abline(v=median(x),col="red")
+legend("topleft",legend=c("Bootstrap medians","Median of original sample"),col=c("black","red"),pch=c("l","l"))
+```
+
+The medians of the bootstrap samples are not normally distributed around the sample median
+### Based on the three different bootstrap sample lengths in 3. compute the corresponding 0.025 and 0.975 quantiles. Compare the three resulting intervals against each other.
+```{r}
+get.quantile.medians <- function(data,index,prob){
+  return(quantile(data$medians[1:index],probs=prob))
+}
+table.median.quantiles <- data.frame(`20`=get.quantile.medians(df.bootstrap.mean_medians,20,c(0.025,0.975)),
+                                   `200`=get.quantile.medians(df.bootstrap.mean_medians,200,c(0.025,0.975)),
+                                   `2000`=get.quantile.medians(df.bootstrap.mean_medians,2000,c(0.025,0.975)))
+table.median.quantiles<-data.frame(t(table.median.quantiles))
+colnames(table.median.quantiles) <- c("Q_0.025","Q_0.975")
+rownames(table.median.quantiles) <- c(20,200,2000)
+knitr::kable(table.mean.quantiles)
+```
+
+
+# Task 2
+Let's explore the effect of outliers on the outcomes of Bootstrap Sampling.
+## Set your seed to 1234. And then sample 1960 points from a standard normal distribution to create the vector x.clean then sample 40 observations from uniform(4,5) and denote them as x.cont. The total data is x <- c(x.clean,x.cont). After creating the sample set your seed to your immatriculation number.
+
+```{r}
+set.seed(1234)
+x.clean <- rnorm(1960)
+x.cont <- runif(40,4,5)
+x<- c(x.clean,x.cont)
+```
+
+## Estimate the median, the mean and the trimmed mean with alpha = 0.05 for x and x.clean.
+
+```{r}
+cat("Estimated mean for x ",mean(x))
+cat("Estimated mean for x.clean ",mean(x.clean))
+cat("Estimated median for x ",median(x))
+cat("Estimated median for x.clean ",median(x.clean))
+cat("trimmed Mean for x ", mean(x,trim=.05))
+cat("trimmed Mean for x.clean ", mean(x.clean,trim=.05))
+```
+## Use nonparametric bootstrap (for x and x.clean) to calculate for all 3 estimators the standard error and 95 percentile CI
+We will use a bigger bootstrap sample of 10k to try to get more accurate results.
+```{r}
+set.seed(11835945)
+bootstrap.xclean <- data.frame(t(replicate(10000,c(sample(x.clean,replace=TRUE)))))
+bootstrap.xclean.estimators <- data.frame(means= rowMeans(bootstrap.xclean[1:10000,]),
+                                          medians = apply(bootstrap.xclean, 1, median),
+                                          trimmed_means =apply(bootstrap.xclean, 1, mean,trim=.05) )
+bootstrap.x <- data.frame(t(replicate(10000,c(sample(x,replace=TRUE)))))
+bootstrap.x.estimators <- data.frame(means= rowMeans(bootstrap.x[1:10000,]),
+                                     medians = apply(bootstrap.x, 1, median),
+                                     trimmed_means =apply(bootstrap.x, 1, mean,trim=.05))
+
+```
+### 3 Estimators calulation for x.clean
+#### Mean of x.clean with non.par. boot
+\
+
+```{r}
+cat("Nonparametric Booststrap estimation for the mean of x.clean: ",
+    mean(bootstrap.xclean.estimators$means))
+cat("Standard Error:", sd(bootstrap.xclean.estimators$means))
+cat("95 %: [",quantile(bootstrap.xclean.estimators$means,.025),
+    ",",quantile(bootstrap.xclean.estimators$means,.975),"]")
+```
+
+#### Median of x.clean with non-parametric bootstrapping
+\
+```{r}
+cat("Nonparametric Booststrap estimation for the median of x.clean",
+    mean(bootstrap.xclean.estimators$medians))
+cat("Standard Error ", sd(bootstrap.xclean.estimators$medians),
+    " 95% Intervall ",quantile(bootstrap.xclean.estimators$medians,.025),
+    ",",quantile(bootstrap.xclean.estimators$medians,.975),"]")
+```
+#### Trimmed Mean of x.clean with non-parametric bootstrapping
+\
+```{r}
+cat("Nonparametric Booststrap estimation for the trimmed mean (.05) of x.clean",mean(bootstrap.xclean.estimators$trimmed_means))
+cat("Standard Error ", sd(bootstrap.xclean.estimators$trimmed_means))
+cat("95 % [",quantile(bootstrap.xclean.estimators$trimmed_means,.025),",",quantile(bootstrap.xclean.estimators$trimmed_means,.975),"]")
+```
+
+### 3 Estimators calulation for x
+#### Mean of x with non-parametric bootstrapping
+\
+```{r}
+cat("Nonparametric Booststrap estimation for the mean of x: ",mean(bootstrap.x.estimators$means))
+cat("Standard Error:", sd(bootstrap.x.estimators$means))
+cat("95 %: [",quantile(bootstrap.x.estimators$means,.025),",",quantile(bootstrap.x.estimators$means,.975),"]")
+```
+#### Median of x with non-parametric bootstrapping
+\
+```{r}
+cat("Nonparametric Booststrap estimation for the median of x",mean(bootstrap.x.estimators$medians))
+cat("Standard Error ", sd(bootstrap.x.estimators$medians))
+cat("95 % [",quantile(bootstrap.x.estimators$medians,.025),",",quantile(bootstrap.x.estimators$medians,.975),"]")
+```
+#### Trimmed Mean of x with non-parametric bootstrapping
+\
+```{r}
+cat("Nonparametric Booststrap estimation for the trimmed mean (.05) of x",mean(bootstrap.x.estimators$trimmed_means))
+cat("Standard Error ", sd(bootstrap.x.estimators$trimmed_means))
+cat("95 % [",quantile(bootstrap.x.estimators$trimmed_means,.025),",",quantile(bootstrap.x.estimators$trimmed_means,.975),"]")
+```
+
+## Use parametric bootstrap (based on x and x.clean) to Calculate the following:
+
+### bias
+### standard error
+### 95 % CI
+### Bias corrected estimate
+
+## Compare and summarize your findings with tables and graphically.
+
+# Task 3
+## Based on the above tasks and your lecture materials, explain the methodology of bootstrapping for the construction of conifdence intervals and parametric or non-parametric tests.
 
