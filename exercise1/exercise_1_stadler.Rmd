@@ -102,7 +102,7 @@ knitr::kable(table)
 We can see, that all 4 methods achieve very accurate results. It seems, that the excel methods becomes a bit inaccurate when the numbers of the dataset are larger by scale.
 
 ### Write a wrapper function which calls the different variants.
-I want to evaluate, wheter the values are also equal to the var calculation method. Thus I define a wrapper and iterate over all data sets and methods. To compare for equality, I use the comparison methods of "==", "all.equal" and "identical"
+I want to evaluate, whether the values are also equal to the var calculation method. Thus I define a wrapper and iterate over all data sets and methods. To compare for equality, I use the comparison methods of "==", "all.equal" and "identical"
 Code for wrapper
 ```{r wrapper, warning=FALSE , message=FALSE}
 var.wrapper <- function(data, type="var") {
@@ -251,7 +251,7 @@ Regarding condition number for shifted variance, shifting by the mean results in
 ### Performance check on excel with shifted dataset 2
 
 At last, I want to check the performance of the excel algorithm when shifting dataset 2 by its mean or other values (since I expect excel to be more correct on the mean-shifted dataset 2 and excel is the fastest method).
-We know, that the variance for dataset 2 with excel is very close to the real one of we shift by the mean:  
+We know, that the variance for dataset 2 with excel is very close to the real one if we shift by the mean:  
 "gold standard" variance of dataset 2: `r var(data.set.x2)`  
 excel variance of mean-shifted dataset 2: `r excel(data.set.x2-mean(data.set.x2))`
 
